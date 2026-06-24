@@ -2,12 +2,12 @@
 # MIP workspace bootstrap (stage 1)
 # Clone or update MIPScripts, then run init/init.ps1 for Windows tool + repo setup.
 #
-# Usage (Git Bash, from your UE workspace root):
-#   curl -fsSL https://raw.githubusercontent.com/Multiplayer-Integration-Plugin/MIPPublicScripts/main/bootstrap-mip.sh | bash
+# Usage (Command Prompt, from your UE workspace root):
+#   curl -fsSL https://raw.githubusercontent.com/Multiplayer-Integration-Plugin/MIPPublicScripts/main/bootstrap-mip.bat -o bootstrap-mip.bat
+#   bootstrap-mip.bat
 #
-# PowerShell users: use bootstrap-mip.ps1 instead (curl is not Unix curl in PowerShell).
-#   irm https://raw.githubusercontent.com/Multiplayer-Integration-Plugin/MIPPublicScripts/main/bootstrap-mip.ps1 -OutFile bootstrap-mip.ps1
-#   .\bootstrap-mip.ps1
+# Git Bash:
+#   curl -fsSL https://raw.githubusercontent.com/Multiplayer-Integration-Plugin/MIPPublicScripts/main/bootstrap-mip.sh | bash
 #
 # Requires: Git Bash on Windows, GitHub access to MIPScripts and mip-be-users.
 

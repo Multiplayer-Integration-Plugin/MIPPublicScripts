@@ -6,13 +6,13 @@
 .DESCRIPTION
   Clones MIPScripts into the current workspace, then runs init/init.ps1.
 
-  Usage (PowerShell, from your UE workspace root):
-    cd D:\Dev\YourProject
-    irm https://raw.githubusercontent.com/Multiplayer-Integration-Plugin/MIPPublicScripts/main/bootstrap-mip.ps1 -OutFile bootstrap-mip.ps1
-    .\bootstrap-mip.ps1
+  Usage (Command Prompt, from your UE workspace root):
+    cd /d D:\Dev\YourProject
+    curl -fsSL .../bootstrap-mip.bat -o bootstrap-mip.bat
+    bootstrap-mip.bat
 
-  Or one line (requires git on PATH):
-    irm .../bootstrap-mip.ps1 | iex
+  Git Bash:
+    curl -fsSL .../bootstrap-mip.sh | bash
 #>
 param(
   [string]$WorkspaceRoot = (Get-Location).Path,
