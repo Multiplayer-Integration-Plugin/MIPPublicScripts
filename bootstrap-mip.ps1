@@ -1,19 +1,8 @@
 #Requires -Version 5.1
-<#
-.SYNOPSIS
-  MIP workspace bootstrap for PowerShell (Windows).
-
-.DESCRIPTION
-  Clones MIPScripts into the current workspace, then runs init/init.ps1.
-
-  Usage (Command Prompt, from your UE workspace root):
-    cd /d D:\Dev\YourProject
-    curl -fsSL .../bootstrap-mip.bat -o bootstrap-mip.bat
-    bootstrap-mip.bat
-#>
 param(
   [string]$WorkspaceRoot = (Get-Location).Path,
-  [string]$MipScriptsRepo = 'https://github.com/Multiplayer-Integration-Plugin/MIPScripts.git'
+  [string]$MipScriptsRepo = 'https://github.com/Multiplayer-Integration-Plugin/MIPScripts.git',
+  [switch]$NoPause
 )
 
 $ErrorActionPreference = 'Stop'
@@ -22,35 +11,91 @@ function Write-Info([string]$Message) {
   Write-Host "[INFO] $Message"
 }
 
+function Write-Ok([string]$Message) {
+  Write-Host "[OK]   $Message" -ForegroundColor Green
+}
+
+function Write-Err([string]$Message) {
+  Write-Host "[ERROR] $Message" -ForegroundColor Red
+}
+
+function Write-Step([string]$Message) {
+  Write-Host ''
+  Write-Host '========================================' -ForegroundColor Cyan
+  Write-Host "  $Message" -ForegroundColor Cyan
+  Write-Host '========================================' -ForegroundColor Cyan
+}
+
+function Wait-IfInteractive {
+  if ($NoPause) { return }
+  Write-Host ''
+  Read-Host 'Press Enter to close this window'
+}
+
 if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-  Write-Host '[ERROR] git is not on PATH. Install Git for Windows first (https://git-scm.com/download/win) or: choco install git -y' -ForegroundColor Red
+  Write-Err 'git is not on PATH. Install Git for Windows first (https://git-scm.com/download/win).'
+  Wait-IfInteractive
   exit 1
 }
 
-$WorkspaceRoot = (Resolve-Path $WorkspaceRoot).Path
-$MipScriptsDir = Join-Path $WorkspaceRoot 'MIPScripts'
+$bootstrapSuccess = $false
+try {
+  Write-Step 'MIP bootstrap starting'
 
-Write-Info "Workspace root: $WorkspaceRoot"
+  $WorkspaceRoot = (Resolve-Path $WorkspaceRoot).Path
+  $MipScriptsDir = Join-Path $WorkspaceRoot 'MIPScripts'
 
-if (-not (Test-Path (Join-Path $MipScriptsDir '.git'))) {
-  if (Test-Path $MipScriptsDir) {
-    Write-Host "[ERROR] $MipScriptsDir exists but is not a git repo. Remove it and re-run bootstrap." -ForegroundColor Red
-    exit 1
+  Write-Info "Workspace root: $WorkspaceRoot"
+
+  if (-not (Test-Path (Join-Path $MipScriptsDir '.git'))) {
+    if (Test-Path $MipScriptsDir) {
+      throw "$MipScriptsDir exists but is not a git repo. Remove it and re-run bootstrap."
+    }
+    Write-Step 'Cloning MIPScripts'
+    Write-Info "Repository: $MipScriptsRepo"
+    Write-Info "Target:     $MipScriptsDir"
+    & git clone --progress $MipScriptsRepo $MipScriptsDir
+    if ($LASTEXITCODE -ne 0) {
+      throw "git clone MIPScripts failed with exit code $LASTEXITCODE"
+    }
+    Write-Ok 'MIPScripts cloned'
+  } else {
+    Write-Ok "MIPScripts already present at $MipScriptsDir"
   }
-  Write-Info "Cloning MIPScripts into $MipScriptsDir"
-  & git clone $MipScriptsRepo $MipScriptsDir
+
+  $InitPs1 = Join-Path $MipScriptsDir 'init\init.ps1'
+  if (-not (Test-Path -LiteralPath $InitPs1)) {
+    throw "Missing $InitPs1 — pull latest MIPScripts (git pull in MIPScripts/) and re-run bootstrap."
+  }
+
+  Write-Step 'Running MIPScripts/init/init.ps1'
+  $initArgs = @(
+    '-NoProfile',
+    '-ExecutionPolicy', 'Bypass',
+    '-File', $InitPs1,
+    '-WorkspaceRoot', $WorkspaceRoot,
+    '-NoPause'
+  )
+
+  & powershell.exe @initArgs
   if ($LASTEXITCODE -ne 0) {
-    throw "git clone MIPScripts failed with exit code $LASTEXITCODE"
+    throw "init.ps1 failed with exit code $LASTEXITCODE"
   }
-} else {
-  Write-Info "MIPScripts already present at $MipScriptsDir"
+
+  $bootstrapSuccess = $true
+  Write-Host ''
+  Write-Host '========================================' -ForegroundColor Cyan
+  Write-Host '  MIP BOOTSTRAP: SUCCESS' -ForegroundColor Green
+  Write-Host '========================================' -ForegroundColor Cyan
+} catch {
+  Write-Host ''
+  Write-Host '========================================' -ForegroundColor Cyan
+  Write-Host '  MIP BOOTSTRAP: FAILED' -ForegroundColor Red
+  Write-Host '========================================' -ForegroundColor Cyan
+  Write-Err $_.Exception.Message
+  if (-not $NoPause) { Wait-IfInteractive }
+  exit 1
 }
 
-$InitPs1 = Join-Path $MipScriptsDir 'init\init.ps1'
-if (-not (Test-Path -LiteralPath $InitPs1)) {
-  throw "Missing $InitPs1 — pull latest MIPScripts (git pull in MIPScripts/) and re-run bootstrap."
-}
-
-Write-Info 'Running MIPScripts/init/init.ps1'
-& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $InitPs1 -WorkspaceRoot $WorkspaceRoot
-exit $LASTEXITCODE
+if (-not $NoPause) { Wait-IfInteractive }
+exit 0
