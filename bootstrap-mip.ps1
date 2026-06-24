@@ -17,7 +17,7 @@
 param(
   [string]$WorkspaceRoot = (Get-Location).Path,
   [string]$MipScriptsRepo = 'https://github.com/Multiplayer-Integration-Plugin/MIPScripts.git',
-  [string]$MipScriptsBranch = 'main'
+  [string]$MipScriptsBranch = 'master'
 )
 
 $ErrorActionPreference = 'Stop'

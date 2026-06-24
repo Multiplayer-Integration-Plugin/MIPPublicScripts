@@ -14,7 +14,7 @@
 set -euo pipefail
 
 MIPSCRIPTS_REPO="${MIPSCRIPTS_REPO:-https://github.com/Multiplayer-Integration-Plugin/MIPScripts.git}"
-MIPSCRIPTS_BRANCH="${MIPSCRIPTS_BRANCH:-main}"
+MIPSCRIPTS_BRANCH="${MIPSCRIPTS_BRANCH:-master}"
 WORKSPACE_ROOT="$(pwd)"
 MIPSCRIPTS_DIR="$WORKSPACE_ROOT/MIPScripts"
 
