@@ -10,14 +10,10 @@
     cd /d D:\Dev\YourProject
     curl -fsSL .../bootstrap-mip.bat -o bootstrap-mip.bat
     bootstrap-mip.bat
-
-  Git Bash:
-    curl -fsSL .../bootstrap-mip.sh | bash
 #>
 param(
   [string]$WorkspaceRoot = (Get-Location).Path,
-  [string]$MipScriptsRepo = 'https://github.com/Multiplayer-Integration-Plugin/MIPScripts.git',
-  [string]$MipScriptsBranch = 'master'
+  [string]$MipScriptsRepo = 'https://github.com/Multiplayer-Integration-Plugin/MIPScripts.git'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -37,8 +33,12 @@ $MipScriptsDir = Join-Path $WorkspaceRoot 'MIPScripts'
 Write-Info "Workspace root: $WorkspaceRoot"
 
 if (-not (Test-Path (Join-Path $MipScriptsDir '.git'))) {
+  if (Test-Path $MipScriptsDir) {
+    Write-Host "[ERROR] $MipScriptsDir exists but is not a git repo. Remove it and re-run bootstrap." -ForegroundColor Red
+    exit 1
+  }
   Write-Info "Cloning MIPScripts into $MipScriptsDir"
-  & git clone --branch $MipScriptsBranch --single-branch $MipScriptsRepo $MipScriptsDir
+  & git clone $MipScriptsRepo $MipScriptsDir
   if ($LASTEXITCODE -ne 0) {
     throw "git clone MIPScripts failed with exit code $LASTEXITCODE"
   }
@@ -48,7 +48,7 @@ if (-not (Test-Path (Join-Path $MipScriptsDir '.git'))) {
 
 $InitPs1 = Join-Path $MipScriptsDir 'init\init.ps1'
 if (-not (Test-Path -LiteralPath $InitPs1)) {
-  throw "Missing $InitPs1 — update MIPScripts or re-run bootstrap after pulling latest MIPScripts."
+  throw "Missing $InitPs1 — pull latest MIPScripts (git pull in MIPScripts/) and re-run bootstrap."
 }
 
 Write-Info 'Running MIPScripts/init/init.ps1'

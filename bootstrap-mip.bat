@@ -19,13 +19,11 @@ if errorlevel 1 (
   exit /b 1
 )
 
-if not exist "%PS1%" (
-  echo [INFO] Downloading bootstrap-mip.ps1...
-  curl -fsSL "%RAW%/bootstrap-mip.ps1" -o "%PS1%"
-  if errorlevel 1 (
-    echo [ERROR] Download failed. Check the URL and your network.
-    exit /b 1
-  )
+echo [INFO] Downloading latest bootstrap-mip.ps1...
+curl -fsSL "%RAW%/bootstrap-mip.ps1" -o "%PS1%"
+if errorlevel 1 (
+  echo [ERROR] Download failed. Check the URL and your network.
+  exit /b 1
 )
 
 echo [INFO] Starting bootstrap (clone MIPScripts, install tools, mip-be)...

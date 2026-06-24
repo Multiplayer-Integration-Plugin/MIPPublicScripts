@@ -14,15 +14,18 @@
 set -euo pipefail
 
 MIPSCRIPTS_REPO="${MIPSCRIPTS_REPO:-https://github.com/Multiplayer-Integration-Plugin/MIPScripts.git}"
-MIPSCRIPTS_BRANCH="${MIPSCRIPTS_BRANCH:-master}"
 WORKSPACE_ROOT="$(pwd)"
 MIPSCRIPTS_DIR="$WORKSPACE_ROOT/MIPScripts"
 
 echo "[INFO] Workspace root: $WORKSPACE_ROOT"
 
 if [[ ! -d "$MIPSCRIPTS_DIR/.git" ]]; then
+  if [[ -e "$MIPSCRIPTS_DIR" ]]; then
+    echo "[ERROR] $MIPSCRIPTS_DIR exists but is not a git repo. Remove it and re-run bootstrap."
+    exit 1
+  fi
   echo "[INFO] Cloning MIPScripts into $MIPSCRIPTS_DIR"
-  git clone --branch "$MIPSCRIPTS_BRANCH" --single-branch "$MIPSCRIPTS_REPO" "$MIPSCRIPTS_DIR"
+  git clone "$MIPSCRIPTS_REPO" "$MIPSCRIPTS_DIR"
 else
   echo "[INFO] MIPScripts already present at $MIPSCRIPTS_DIR"
 fi
