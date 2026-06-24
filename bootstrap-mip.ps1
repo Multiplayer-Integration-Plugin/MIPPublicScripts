@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 param(
   [string]$WorkspaceRoot = (Get-Location).Path,
   [string]$MipScriptsRepo = 'https://github.com/Multiplayer-Integration-Plugin/MIPScripts.git',
@@ -65,7 +65,7 @@ try {
 
   $InitPs1 = Join-Path $MipScriptsDir 'init\init.ps1'
   if (-not (Test-Path -LiteralPath $InitPs1)) {
-    throw "Missing $InitPs1 — pull latest MIPScripts (git pull in MIPScripts/) and re-run bootstrap."
+    throw ('Missing {0} - pull latest MIPScripts (git pull in MIPScripts/) and re-run bootstrap.' -f $InitPs1)
   }
 
   Write-Step 'Running MIPScripts/init/init.ps1'

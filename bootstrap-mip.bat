@@ -24,7 +24,8 @@ if errorlevel 1 (
 )
 
 echo [INFO] Downloading latest bootstrap-mip.ps1...
-curl -fsSL "%RAW%/bootstrap-mip.ps1" -o "%PS1%"
+del "%PS1%" >nul 2>&1
+curl -fsSL -H "Cache-Control: no-cache" "%RAW%/bootstrap-mip.ps1?v=3" -o "%PS1%"
 if errorlevel 1 (
   echo [ERROR] Download failed. Check the URL and your network.
   goto :fail
