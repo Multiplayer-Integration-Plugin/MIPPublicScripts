@@ -4,8 +4,10 @@
 #
 # Usage (Git Bash, from your UE workspace root):
 #   curl -fsSL https://raw.githubusercontent.com/Multiplayer-Integration-Plugin/MIPPublicScripts/main/bootstrap-mip.sh | bash
-# Or:
-#   bash bootstrap-mip.sh
+#
+# PowerShell users: use bootstrap-mip.ps1 instead (curl is not Unix curl in PowerShell).
+#   irm https://raw.githubusercontent.com/Multiplayer-Integration-Plugin/MIPPublicScripts/main/bootstrap-mip.ps1 -OutFile bootstrap-mip.ps1
+#   .\bootstrap-mip.ps1
 #
 # Requires: Git Bash on Windows, GitHub access to MIPScripts and mip-be-users.
 
