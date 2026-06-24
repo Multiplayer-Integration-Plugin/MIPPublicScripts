@@ -17,15 +17,9 @@ if errorlevel 1 (
   goto :fail
 )
 
-where git >nul 2>&1
-if errorlevel 1 (
-  echo [ERROR] git not on PATH. Install Git for Windows first.
-  goto :fail
-)
-
 echo [INFO] Downloading latest bootstrap-mip.ps1...
 del "%PS1%" >nul 2>&1
-curl -fsSL -H "Cache-Control: no-cache" "%RAW%/bootstrap-mip.ps1?v=3" -o "%PS1%"
+curl -fsSL -H "Cache-Control: no-cache" "%RAW%/bootstrap-mip.ps1?v=6" -o "%PS1%"
 if errorlevel 1 (
   echo [ERROR] Download failed. Check the URL and your network.
   goto :fail
@@ -56,5 +50,5 @@ set "EXITCODE=1"
 
 :done
 echo.
-pause
+powershell -NoProfile -Command "Write-Host 'Press any key to close, or wait 5 seconds...' -ForegroundColor Gray; $d=(Get-Date).AddSeconds(5); while((Get-Date) -lt $d){ if([Console]::KeyAvailable){ $null=[Console]::ReadKey($true); break }; Start-Sleep -Milliseconds 200 }"
 exit /b %EXITCODE%
