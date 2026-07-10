@@ -54,6 +54,29 @@ function Test-CommandExists([string]$Name) {
   return [bool](Get-Command $Name -ErrorAction SilentlyContinue)
 }
 
+function Resolve-WorkspaceRoot {
+  param([string]$Path)
+
+  if ([string]::IsNullOrWhiteSpace($Path)) {
+    $Path = (Get-Location).ProviderPath
+  }
+
+  $Path = $Path.TrimEnd('\', '/')
+  if (-not (Test-Path -LiteralPath $Path)) {
+    throw "Workspace path does not exist: $Path"
+  }
+
+  return (Resolve-Path -LiteralPath $Path).Path
+}
+
+function Start-PowerShellElevated {
+  param(
+    [string[]]$ArgumentList
+  )
+
+  return Start-Process -FilePath 'powershell.exe' -Verb RunAs -ArgumentList $ArgumentList -PassThru -Wait
+}
+
 function Stop-ChocolateyLockedProcesses {
   $chocoPath = Join-Path $env:ProgramData 'chocolatey'
   if (-not (Test-Path $chocoPath)) {
@@ -232,7 +255,7 @@ function Wait-ElevatedWindow {
 }
 
 function Show-ElevatedLog {
-  if (-not (Test-Path $ElevatedLogFile)) {
+  if (-not (Test-Path -LiteralPath $ElevatedLogFile)) {
     Write-Host "[WARN] No elevated log found at $ElevatedLogFile" -ForegroundColor Yellow
     return
   }
@@ -247,16 +270,25 @@ function Show-ElevatedLog {
 function Invoke-ElevatedBootstrapPass {
   param([string]$Root)
 
-  Remove-Item $ElevatedLogFile -Force -ErrorAction SilentlyContinue
+  Remove-Item -LiteralPath $ElevatedLogFile -Force -ErrorAction SilentlyContinue
 
-  $argLine = "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" -WorkspaceRoot `"$Root`" -BootstrapElevated"
+  $elevatedArgs = @(
+    '-NoProfile',
+    '-ExecutionPolicy', 'Bypass',
+    '-File', $PSCommandPath,
+    '-WorkspaceRoot', $Root,
+    '-BootstrapElevated'
+  )
+  if ($NoPause) {
+    $elevatedArgs += '-NoPause'
+  }
 
   Write-Info 'Opening an Administrator PowerShell window (Git install)...'
   Write-Info 'Click Yes on the UAC prompt.'
   Write-Info "Administrator log: $ElevatedLogFile"
 
   try {
-    $proc = Start-Process -FilePath 'powershell.exe' -Verb RunAs -ArgumentList $argLine -PassThru -Wait
+    $proc = Start-PowerShellElevated -ArgumentList $elevatedArgs
   } catch {
     if ($_.Exception.Message -match 'canceled by the user|operation was canceled') {
       throw 'UAC prompt was cancelled. Administrator approval is required to install Git.'
@@ -302,7 +334,7 @@ function Ensure-BootstrapPrerequisites {
 if ([string]::IsNullOrWhiteSpace($WorkspaceRoot)) {
   $WorkspaceRoot = (Get-Location).ProviderPath
 }
-$WorkspaceRoot = (Resolve-Path -LiteralPath $WorkspaceRoot).Path
+$WorkspaceRoot = Resolve-WorkspaceRoot -Path $WorkspaceRoot
 $MainLogFile = Join-Path $WorkspaceRoot 'mip-bootstrap.log'
 $ElevatedLogFile = Join-Path $WorkspaceRoot 'mip-bootstrap-elevated.log'
 
@@ -310,7 +342,7 @@ if ($BootstrapElevated) {
   $elevatedTranscriptStarted = $false
   $elevatedExitCode = 0
   try {
-    Remove-Item $ElevatedLogFile -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath $ElevatedLogFile -Force -ErrorAction SilentlyContinue
     Start-Transcript -Path $ElevatedLogFile -Force | Out-Null
     $elevatedTranscriptStarted = $true
     Write-Info "Administrator log: $ElevatedLogFile"
@@ -335,7 +367,7 @@ if ($BootstrapElevated) {
 
 $mainTranscriptStarted = $false
 try {
-  Remove-Item $MainLogFile -Force -ErrorAction SilentlyContinue
+  Remove-Item -LiteralPath $MainLogFile -Force -ErrorAction SilentlyContinue
   Start-Transcript -Path $MainLogFile -Force | Out-Null
   $mainTranscriptStarted = $true
   Write-Info "Install log: $MainLogFile"
@@ -347,14 +379,14 @@ try {
 
   $MipScriptsDir = Join-Path $WorkspaceRoot 'MIPScripts'
 
-  if (-not (Test-Path (Join-Path $MipScriptsDir '.git'))) {
-    if (Test-Path $MipScriptsDir) {
+  if (-not (Test-Path -LiteralPath (Join-Path $MipScriptsDir '.git'))) {
+    if (Test-Path -LiteralPath $MipScriptsDir) {
       throw "$MipScriptsDir exists but is not a git repo. Remove it and re-run bootstrap."
     }
     Write-Step 'Cloning MIPScripts'
     Write-Info "Repository: $MipScriptsRepo"
     Write-Info "Target:     $MipScriptsDir"
-    & git clone --progress $MipScriptsRepo $MipScriptsDir
+    & git clone --progress $MipScriptsRepo -- $MipScriptsDir
     if ($LASTEXITCODE -ne 0) {
       throw "git clone MIPScripts failed with exit code $LASTEXITCODE"
     }
@@ -381,7 +413,7 @@ try {
   if ($LASTEXITCODE -ne 0) {
     $initLog = Join-Path $WorkspaceRoot 'mip-init.log'
     $initElevatedLog = Join-Path $WorkspaceRoot 'mip-init-elevated.log'
-    if (Test-Path $initElevatedLog) {
+    if (Test-Path -LiteralPath $initElevatedLog) {
       Write-Host ''
       Write-Host '--- init.ps1 Administrator log ---' -ForegroundColor Yellow
       Get-Content $initElevatedLog -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_ }
@@ -400,7 +432,7 @@ try {
   Write-Host '  MIP BOOTSTRAP: FAILED' -ForegroundColor Red
   Write-Host '========================================' -ForegroundColor Cyan
   Write-Err $_.Exception.Message
-  if (Test-Path $ElevatedLogFile) {
+  if (Test-Path -LiteralPath $ElevatedLogFile) {
     Show-ElevatedLog
   }
   Write-Info "Install log: $MainLogFile"

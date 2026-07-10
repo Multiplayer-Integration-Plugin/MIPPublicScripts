@@ -3,12 +3,15 @@ setlocal EnableExtensions
 
 set "RAW=https://raw.githubusercontent.com/Multiplayer-Integration-Plugin/MIPPublicScripts/main"
 set "PS1=%~dp0bootstrap-mip.ps1"
+rem Workspace = folder containing this batch file (works with spaces; not %%CD%%)
+set "WORKSPACE=%~dp0"
+if "%WORKSPACE:~-1%"=="\" set "WORKSPACE=%WORKSPACE:~0,-1%"
 
 echo.
 echo ========================================
 echo   MIP bootstrap
 echo ========================================
-echo [INFO] Workspace: %CD%
+echo [INFO] Workspace: "%WORKSPACE%"
 echo.
 
 where curl >nul 2>&1
@@ -19,7 +22,7 @@ if errorlevel 1 (
 
 echo [INFO] Downloading latest bootstrap-mip.ps1...
 del "%PS1%" >nul 2>&1
-curl -fsSL -H "Cache-Control: no-cache" "%RAW%/bootstrap-mip.ps1?v=6" -o "%PS1%"
+curl -fsSL -H "Cache-Control: no-cache" "%RAW%/bootstrap-mip.ps1?v=7" -o "%PS1%"
 if errorlevel 1 (
   echo [ERROR] Download failed. Check the URL and your network.
   goto :fail
@@ -29,7 +32,7 @@ echo.
 
 echo [INFO] Starting bootstrap (clone MIPScripts, install tools, mip-be)...
 echo.
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%PS1%" -WorkspaceRoot "%CD%" -NoPause
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%PS1%" -WorkspaceRoot "%WORKSPACE%" -NoPause
 set "EXITCODE=%ERRORLEVEL%"
 echo.
 
